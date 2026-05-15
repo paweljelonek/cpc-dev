@@ -1,38 +1,38 @@
-; Animacja koloru obramowania — Amstrad CPC
+; Border color animation - Amstrad CPC
 ;
-; Cyklicznie zmienia kolor bordera uzywajac bezposredniego
-; dostepu do Gate Array (port &7F).
+; Cycles through all 32 CPC colors on the screen border using
+; direct Gate Array access (port &7F).
 ;
-; Uruchomienie z BASICa:
+; Load from BASIC:
 ;   LOAD "MAIN.BIN",&8000
 ;   CALL &8000
-; Wyjscie: CTRL+BREAK
+; Exit: CTRL+BREAK
 
     org &8000
 
-; Gate Array: adres portu (A15=0, A14=1 → typowo &7F)
+; Gate Array port (A15=0, A14=1 - typically &7F)
 GA          equ &7F
-; Komenda wyboru pena: bity 7-6 = 01 → &40 | numer_pena
+; Select pen command: bits 7-6 = 01 - &40 | pen_number
 ; Pen 16 (&10) = border
 GA_BORDER   equ &50         ; &40 | &10
-; Komenda ustawienia koloru: bity 7-6 = 10 → &80 | kolor (0-31)
+; Set color command: bits 7-6 = 10 - &80 | color (0-31)
 GA_COLOR    equ &80
 
-DELAY       equ 4000        ; tiki opoznienia miedzy kolorami
+DELAY       equ 4000        ; delay ticks between colors
 
 start:
-    ld b, 0                 ; biezacy kolor (0-31)
+    ld b, 0                 ; current color (0-31)
 
 .loop:
-    ; wybierz pen bordera
+    ; select border pen
     ld a, GA_BORDER
     out (GA), a
-    ; ustaw kolor
+    ; set color
     ld a, GA_COLOR
     or b
     out (GA), a
 
-    ; opoznienie
+    ; delay
     ld de, DELAY
 .wait:
     dec de
@@ -40,7 +40,7 @@ start:
     or e
     jr nz, .wait
 
-    ; nastepny kolor, zawijaj po 32
+    ; next color, wrap at 32
     inc b
     ld a, b
     and &1F

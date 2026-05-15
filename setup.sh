@@ -45,7 +45,7 @@ sudo apt-get install -y \
 ok "Dependencies installed."
 
 # =============================================================================
-# 2. CAPRICE32 — CPC EMULATOR
+# 2. CAPRICE32 - CPC EMULATOR
 # =============================================================================
 info "Installing Caprice32 emulator..."
 if ! command -v cap32 &>/dev/null; then
@@ -65,16 +65,17 @@ else
 fi
 
 # =============================================================================
-# 3. RASM — CPC ASSEMBLER
+# 3. RASM - CPC ASSEMBLER
 # =============================================================================
 info "Installing Rasm assembler..."
 RASM_BIN="$BIN_DIR/rasm"
 if [ ! -f "$RASM_BIN" ]; then
     cd "$INSTALL_DIR"
+    [ -d rasm-src ] && rm -rf rasm-src
     git clone --depth 1 https://github.com/EdouardBERGE/rasm.git rasm-src
     cd rasm-src
     make -j"$(nproc)"
-    cp rasm "$BIN_DIR/"
+    cp rasm.exe "$BIN_DIR/rasm"
     ok "Rasm installed."
     cd "$INSTALL_DIR"
 else
@@ -82,7 +83,7 @@ else
 fi
 
 # =============================================================================
-# 4. PASMO — Z80 CROSS-ASSEMBLER
+# 4. PASMO - Z80 CROSS-ASSEMBLER
 # =============================================================================
 info "Installing Pasmo assembler..."
 if ! command -v pasmo &>/dev/null; then
@@ -104,7 +105,7 @@ else
 fi
 
 # =============================================================================
-# 5. Z88DK — C/ASM COMPILER FOR Z80
+# 5. Z88DK - C/ASM COMPILER FOR Z80
 # =============================================================================
 info "Installing z88dk..."
 Z88DK_DIR="$INSTALL_DIR/z88dk"
@@ -113,7 +114,10 @@ if [ ! -d "$Z88DK_DIR" ]; then
     git clone --depth 1 --recursive https://github.com/z88dk/z88dk.git z88dk
     cd z88dk
     chmod +x build.sh
-    ./build.sh 2>&1 | tail -5
+    # -k: keep going past errors - the ZXN target fails (missing bifrost2 asset) but CPC
+    # libraries are built earlier in the sequence and will be complete regardless.
+    ./build.sh -k 2>&1 | tail -10
+    test -f bin/zcc || error "z88dk build failed: bin/zcc not found"
     # Add to PATH via wrapper
     cat > "$BIN_DIR/zcc" << EOF
 #!/usr/bin/env bash
@@ -129,7 +133,7 @@ else
 fi
 
 # =============================================================================
-# 6. VASM — PORTABLE ASSEMBLER (Z80 BACKEND)
+# 6. VASM - PORTABLE ASSEMBLER (Z80 BACKEND)
 # =============================================================================
 info "Installing vasm..."
 VASM_BIN="$BIN_DIR/vasmz80"
@@ -148,7 +152,7 @@ else
 fi
 
 # =============================================================================
-# 7. IDSK — DISK IMAGE TOOL
+# 7. IDSK - DISK IMAGE TOOL
 # =============================================================================
 info "Installing iDSK..."
 IDSK_BIN="$BIN_DIR/iDSK"
@@ -184,7 +188,7 @@ else
 fi
 
 # =============================================================================
-# 9. ARKOS TRACKER 2 — AY MUSIC TOOL
+# 9. ARKOS TRACKER 2 - AY MUSIC TOOL
 # =============================================================================
 info "Checking Arkos Tracker 2..."
 ARKOS_DIR="$INSTALL_DIR/ArkosTracker2"
@@ -198,7 +202,7 @@ else
 fi
 
 # =============================================================================
-# 10. CPCTELERA — CPC DEVELOPMENT FRAMEWORK
+# 10. CPCTELERA - CPC DEVELOPMENT FRAMEWORK
 # =============================================================================
 info "Installing CPCtelera framework..."
 CPCT_DIR="$INSTALL_DIR/cpctlera"
@@ -206,7 +210,7 @@ if [ ! -d "$CPCT_DIR" ]; then
     cd "$INSTALL_DIR"
     git clone --depth 1 https://github.com/lronaldo/cpctelera.git cpctlera
     cd cpctlera
-    ./setup.sh 2>&1 | tail -10 || warn "CPCtelera setup encountered issues — check manually."
+    ./setup.sh 2>&1 | tail -10 || warn "CPCtelera setup encountered issues - check manually."
     ok "CPCtelera installed."
     cd "$INSTALL_DIR"
 else
@@ -237,24 +241,24 @@ echo ""
 echo "  Installed tools:"
 echo ""
 echo "  ASSEMBLERS:"
-echo "    rasm     — $(command -v rasm    && rasm 2>&1 | head -1 || echo 'not available')"
-echo "    pasmo    — $(command -v pasmo   && pasmo --version 2>&1 | head -1 || echo 'not available')"
-echo "    vasmz80  — $(command -v vasmz80 && echo 'available' || echo 'not available')"
-echo "    nasm     — $(command -v nasm    && nasm --version 2>&1 | head -1 || echo 'not available')"
-echo "    zcc      — $(command -v zcc     && echo 'available (z88dk)' || echo 'not available')"
+echo "    rasm     - $(command -v rasm    && rasm 2>&1 | head -1 || echo 'not available')"
+echo "    pasmo    - $(command -v pasmo   && pasmo --version 2>&1 | head -1 || echo 'not available')"
+echo "    vasmz80  - $(command -v vasmz80 && echo 'available' || echo 'not available')"
+echo "    nasm     - $(command -v nasm    && nasm --version 2>&1 | head -1 || echo 'not available')"
+echo "    zcc      - $(command -v zcc     && echo 'available (z88dk)' || echo 'not available')"
 echo ""
 echo "  EMULATOR:"
-echo "    cap32    — Caprice32 (CPC464/664/6128/6128+)"
+echo "    cap32    - Caprice32 (CPC464/664/6128/6128+)"
 echo ""
 echo "  DISK TOOLS:"
-echo "    iDSK     — DSK image manipulation"
-echo "    cpcxfs   — CPC DSK filesystem tool"
+echo "    iDSK     - DSK image manipulation"
+echo "    cpcxfs   - CPC DSK filesystem tool"
 echo ""
 echo "  MUSIC:"
-echo "    Arkos Tracker 2 — AY/YM music tracker (manual install, see $INSTALL_DIR/ArkosTracker2)"
+echo "    Arkos Tracker 2 - AY/YM music tracker (manual install, see $INSTALL_DIR/ArkosTracker2)"
 echo ""
 echo "  FRAMEWORKS:"
-echo "    CPCtelera — C/ASM development framework ($INSTALL_DIR/cpctlera)"
+echo "    CPCtelera - C/ASM development framework ($INSTALL_DIR/cpctlera)"
 echo ""
 echo -e "${YELLOW}  Restart your terminal or run: source $SHELL_RC${NC}"
 echo ""

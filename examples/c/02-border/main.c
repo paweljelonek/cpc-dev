@@ -1,21 +1,21 @@
-/* Animacja koloru bordera — Amstrad CPC — z88dk (zcc +cpc)
+/* Border color animation - Amstrad CPC - z88dk (zcc +cpc)
  *
  * Build: make
- * Load:  LOAD "MAIN.BIN",&8000  (z BASICa)
+ * Load:  LOAD "MAIN.BIN",&8000  (from BASIC)
  * Run:   CALL &8000
  * Exit:  CTRL+BREAK
  *
- * Dostep do portu Gate Array realizowany przez inline Z80 asm
- * (z88dk: blok #asm / #endasm).
+ * Gate Array port access via inline Z80 asm
+ * (z88dk: #asm / #endasm block).
  */
 
-/* Gate Array port i komendy */
+/* Gate Array port and commands */
 #define GA_PORT     0x7F
-#define GA_BORDER   0x50    /* 0x40 | 0x10: wybierz pen 16 = border  */
-#define GA_COLOR    0x80    /* 0x80 | kolor: ustaw kolor (0-31)       */
+#define GA_BORDER   0x50    /* 0x40 | 0x10: select pen 16 = border   */
+#define GA_COLOR    0x80    /* 0x80 | color: set color (0-31)         */
 
-/* Zmienne globalne uzyte do przekazania wartosci do bloku asm
- * (omijamy kwestie konwencji wywolan z88dk)                         */
+/* Global variable used to pass value into the asm block
+ * (avoids z88dk calling convention issues)                          */
 static unsigned char _ga_val;
 
 static void ga_out(unsigned char val) {

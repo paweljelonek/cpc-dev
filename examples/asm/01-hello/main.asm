@@ -1,20 +1,20 @@
-; Hello World — Amstrad CPC
+; Hello World - Amstrad CPC
 ;
-; Wyswietla tekst uzywajac firmware CPC (TXT_OUTPUT).
-; Uruchomienie z BASICa:
+; Prints text using the CPC firmware routine TXT_OUTPUT.
+; Load from BASIC:
 ;   LOAD "MAIN.BIN",&8000
 ;   CALL &8000
 
     org &8000
 
-TXT_OUTPUT  equ &BB5A       ; firmware: wyslij znak z A na ekran
+TXT_OUTPUT  equ &BB5A       ; firmware: send character in A to screen
 
 start:
     ld hl, msg
 .next:
     ld a, (hl)
     or a
-    ret z                   ; koniec stringa — powrot do BASICa
+    ret z                   ; null terminator - return to BASIC
     call TXT_OUTPUT
     inc hl
     jr .next

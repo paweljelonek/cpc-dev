@@ -1,7 +1,7 @@
-/* Hello World dla Amstrad CPC — z88dk (zcc +cpc)
+/* Hello World - Amstrad CPC - z88dk (zcc +cpc)
  *
  * Build: make
- * Load:  LOAD "MAIN.BIN",&8000  (z BASICa)
+ * Load:  LOAD "MAIN.BIN",&8000  (from BASIC)
  * Run:   CALL &8000
  */
 

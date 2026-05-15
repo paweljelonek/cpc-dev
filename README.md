@@ -13,6 +13,17 @@ Development environment for Amstrad CPC - Z80 assembler and C compiler toolchain
 Caprice32 emulator, DSK disk image tools, and ready-to-run examples.
 Targets CPC464, CPC664, CPC6128, and CPC6128+.
 
+> **🐧 Linux (Ubuntu / Linux Mint / Debian) only**
+>
+> `setup.sh` and `remove.sh` are written for Ubuntu, Linux Mint, and Debian-based
+> distributions. They rely on `apt-get` and assume a standard Debian package layout.
+>
+> Other Linux distributions, macOS, and Windows are **not supported** at the moment.
+> Whether that changes depends entirely on free time and motivation - no promises.
+> If you get it running on another system, a note or patch is welcome.
+
+
+
 ---
 
 ## Contents
@@ -24,6 +35,7 @@ Targets CPC464, CPC664, CPC6128, and CPC6128+.
 - [Examples](#examples)
 - [Tools](#tools)
 - [Known limitations](#known-limitations)
+- [Troubleshooting](#troubleshooting)
 - [Links](#links)
 
 ---
@@ -36,7 +48,8 @@ cpc-dev/
 ├── .env.dist          - configuration template
 ├── .gitignore
 ├── LICENSE
-├── setup-cpc-dev.sh   - install all tools (Linux Mint / Ubuntu / Debian)
+├── setup.sh           - install all tools (Linux Mint / Ubuntu / Debian)
+├── remove.sh          - remove everything installed by setup.sh
 ├── Makefile           - build and run projects
 └── examples/          - ready-to-run examples (ASM and C)
     ├── README.md
@@ -56,10 +69,10 @@ environment - it does not host your code.
 
 ## Requirements
 
-- **OS:** Linux Mint, Ubuntu, or Debian (other distros untested)
+- **OS:** Ubuntu, Linux Mint, or Debian
 - **Shell:** bash or zsh
 - **Disk:** ~2 GB free for source builds (z88dk, CPCtelera)
-- **Internet:** required during `setup-cpc-dev.sh` (downloads sources and packages)
+- **Internet:** required during `setup.sh` (downloads sources and packages)
 - `git`, `curl`, `wget`, `make`, `gcc` - needed before running the setup script
 
 ---
@@ -69,24 +82,74 @@ environment - it does not host your code.
 ### 1. Install tools
 
 ```bash
-./setup-cpc-dev.sh
+./setup.sh
 ```
 
-The script installs everything needed and may take several minutes (z88dk and
-CPCtelera are built from source). Tools end up in three locations:
+The script installs everything needed and may take several minutes. Tools end up
+in three locations:
 
-| Location        | Contents                                                      |
-|-----------------|---------------------------------------------------------------|
-| system (apt)    | `pasmo`, `nasm`, `caprice32`                                  |
-| `~/.cpc-dev/`   | source trees and archives (z88dk, CPCtelera, Rasm, vasm, ...) |
-| `~/.local/bin/` | compiled binaries and wrapper scripts                         |
+> **⏳ z88dk build takes time**
+>
+> Building z88dk from source is the longest step - it clones several submodules
+> and compiles a full C compiler toolchain. Expect **5–15 minutes** of build
+> time. The script will appear to hang while pulling submodules (`ext/regex`,
+> `ext/uthash`, etc.) and then again during compilation - **this is normal,
+> do not interrupt it.**
 
-Make sure `~/.local/bin/` is in your `PATH`. Add this to `~/.bashrc` or
-`~/.zshrc` if it is not already there:
+**`~/.cpc-dev/`** - source trees and build directories:
+
+| Subdirectory      | Contents                                              | Created        |
+|-------------------|-------------------------------------------------------|----------------|
+| `rasm-src/`       | Rasm assembler source                                 | always         |
+| `z88dk/`          | z88dk C compiler and Z80 toolchain                    | always         |
+| `vasm/`           | vasm assembler source                                 | always         |
+| `idsk-src/`       | iDSK disk image tool source                           | always         |
+| `cpcfs-src/`      | cpcxfs DSK filesystem tool source                     | always         |
+| `cpctlera/`       | CPCtelera C/ASM framework                             | always         |
+| `ArkosTracker2/`  | placeholder - Arkos Tracker 2 requires manual download | always        |
+| `caprice32-src/`  | Caprice32 emulator source                             | only if apt fails |
+| `pasmo-src/`      | Pasmo assembler source                                | only if apt fails |
+
+**`~/.local/bin/`** - compiled binaries and wrapper scripts:
+
+| Binary     | Source                        | Installed        |
+|------------|-------------------------------|------------------|
+| `rasm`     | built from source             | always           |
+| `zcc`      | wrapper script for z88dk      | always           |
+| `vasmz80`  | built from source             | always           |
+| `iDSK`     | built from source             | always           |
+| `cpcxfs`   | built from source             | always           |
+| `cap32`    | built from source             | only if apt fails |
+| `pasmo`    | built from source             | only if apt fails |
+
+**system (apt):** always installed via `apt-get`:
+
+| Package            | Purpose                              |
+|--------------------|--------------------------------------|
+| `build-essential`  | gcc, make, and base build tools      |
+| `git`              | version control                      |
+| `curl`, `wget`     | downloading sources                  |
+| `unzip`            | archive extraction                   |
+| `cmake`            | build system (used by Pasmo)         |
+| `python3`, `python3-pip` | scripting, used by some tools  |
+| `default-jre`      | Java runtime (used by CPCtelera)     |
+| `libsdl2-dev`, `libsdl2-image-dev` | graphics/emulator libs |
+| `libpng-dev`, `zlib1g-dev` | image and compression libs   |
+| `nasm`             | x86 assembler (build dependency)     |
+| `caprice32`        | CPC emulator (falls back to source build if unavailable) |
+| `pasmo`            | Z80 assembler (falls back to source build if unavailable) |
+
+The setup script also adds `~/.local/bin` to `PATH` in `~/.bashrc` or `~/.zshrc`
+if not already present.
+
+To undo the installation run:
 
 ```bash
-export PATH="$HOME/.local/bin:$PATH"
+./remove.sh
 ```
+
+This removes `~/.cpc-dev/`, the binaries from `~/.local/bin/`, and the `PATH`
+entry from your shell rc. Apt packages are left intact.
 
 ### 2. Configure
 
@@ -189,31 +252,19 @@ description of the CPC color palette.
 
 ## Tools
 
-| Tool          | Role                                       | Notes                                           |
-|---------------|--------------------------------------------|-------------------------------------------------|
-| **rasm**      | Z80 assembler, CPC-centric                 | Default assembler, supports AMSDOS output, macros, struct |
-| **pasmo**     | Portable Z80 cross-assembler               | Alternative to rasm, simpler feature set        |
-| **vasmz80**   | vasm with Z80 backend                      | Alternative assembler, multiple syntax modes    |
-| **zcc / z88dk** | C compiler and Z80 toolchain             | Used for C examples; `+cpc` target for CPC      |
-| **cap32**     | Caprice32 emulator                         | Emulates CPC464/664/6128/6128+; `-d` opens debugger |
-| **iDSK**      | DSK disk image tool                        | Creates and populates `.dsk` images             |
-| **cpcxfs**    | CPC DSK filesystem tool                    | Alternative to iDSK for DSK manipulation        |
-| **CPCtelera** | C/ASM framework for CPC                    | Higher-level API for graphics, sound, input     |
-| **Arkos Tracker** | AY/YM music tracker                    | Manual install - see project website            |
+All tools below are installed automatically by `setup.sh` for Amstrad CPC development.
 
-Links:
-
-| Tool          | Link                                              |
-|---------------|---------------------------------------------------|
-| rasm          | https://github.com/EdouardBERGE/rasm              |
-| pasmo         | https://pasmo.speccy.org/                         |
-| vasmz80       | http://sun.hasenbraten.de/vasm/                   |
-| zcc           | https://github.com/z88dk/z88dk                    |
-| cap32         | https://github.com/ColinPitrat/caprice32           |
-| iDSK          | https://github.com/cpcsdk/idsk                    |
-| cpcxfs        | https://github.com/cpcsdk/cpcfs                   |
-| CPCtelera     | https://github.com/lronaldo/cpctelera             |
-| Arkos Tracker | https://www.julien-nevo.com/arkostracker/         |
+| Tool          | Role                                       | Notes                                           | Source |
+|---------------|--------------------------------------------|-------------------------------------------------|--------|
+| **rasm**      | Z80 assembler, CPC-centric                 | Default assembler, supports AMSDOS output, macros, struct | [github](https://github.com/EdouardBERGE/rasm) |
+| **pasmo**     | Portable Z80 cross-assembler               | Alternative to rasm, simpler feature set        | [pasmo.speccy.org](https://pasmo.speccy.org/) |
+| **vasmz80**   | vasm with Z80 backend                      | Alternative assembler, multiple syntax modes    | [hasenbraten.de](http://sun.hasenbraten.de/vasm/) |
+| **zcc / z88dk** | C compiler and Z80 toolchain             | Used for C examples; `+cpc` target for CPC      | [github](https://github.com/z88dk/z88dk) |
+| **cap32**     | Caprice32 emulator                         | Emulates CPC464/664/6128/6128+; `-d` opens debugger | [github](https://github.com/ColinPitrat/caprice32) |
+| **iDSK**      | DSK disk image tool                        | Creates and populates `.dsk` images             | [github](https://github.com/cpcsdk/idsk) |
+| **cpcxfs**    | CPC DSK filesystem tool                    | Alternative to iDSK for DSK manipulation        | [github](https://github.com/cpcsdk/cpcfs) |
+| **CPCtelera** | C/ASM framework for CPC                    | Higher-level API for graphics, sound, input     | [github](https://github.com/lronaldo/cpctelera) |
+| **Arkos Tracker** | AY/YM music tracker                    | Manual install - see project website            | [julien-nevo.com](https://www.julien-nevo.com/arkostracker/) |
 
 ---
 
@@ -222,7 +273,7 @@ Links:
 - The Makefile only handles **assembly projects** (`main.asm` + rasm). C
   projects must use their own Makefile (see `examples/c/`). A unified workflow
   for C is not yet implemented.
-- `setup-cpc-dev.sh` has been tested on **Linux Mint / Ubuntu / Debian** only.
+- `setup.sh` has been tested on **Linux Mint / Ubuntu / Debian** only.
   Other distributions will likely need manual adjustments.
 - No support yet for multi-file projects or includes across directories.
 - The Caprice32 autoboot sequence (loading from DSK automatically on start) is
@@ -232,6 +283,28 @@ Links:
   integrated into the main Makefile. The examples use z88dk instead.
 - `iDSK` commands in the Makefile do not set AMSDOS load/exec addresses.
   Always use `LOAD "MAIN.BIN",&8000` followed by `CALL &8000` from BASIC.
+
+---
+
+## Troubleshooting
+
+### z88dk build fails with `bifrost2_engine_48.bin.zx0`
+
+If `setup.sh` fails during the z88dk step with an error like:
+
+```
+make: *** No rule to make target 'target/zxn/obj/zxn/bifrost2_engine_48.bin.zx0'
+```
+
+This is a missing asset in z88dk's ZX Next target — unrelated to CPC development.
+The current `setup.sh` builds z88dk with `-k` (keep going past errors), so the CPC
+libraries finish building before ZXN fails and the error is ignored. If you hit this
+with an older version of the script, remove the partial build and re-run:
+
+```bash
+rm -rf ~/.cpc-dev/z88dk
+./setup.sh
+```
 
 ---
 
@@ -262,7 +335,3 @@ pawel.jelonek [at] gmail [dot] com
 ## License
 
 MIT - see [LICENSE](LICENSE)
-
-## Author
-
-**Paweł Jelonek** - pawel.jelonek [at] gmail [dot] com
