@@ -160,31 +160,15 @@ if [ ! -f "$IDSK_BIN" ]; then
     cd "$INSTALL_DIR"
     git clone --depth 1 https://github.com/cpcsdk/idsk.git idsk-src
     cd idsk-src
+    mkdir -p build && cd build
+    cmake .. -DCMAKE_BUILD_TYPE=Release
     make -j"$(nproc)"
     cp iDSK "$BIN_DIR/"
+    cd "$INSTALL_DIR/idsk-src"
     ok "iDSK installed."
     cd "$INSTALL_DIR"
 else
     ok "iDSK already installed."
-fi
-
-# =============================================================================
-# 8. CPCDSK / DSK TOOLS
-# =============================================================================
-info "Installing cpcxfs (DSK filesystem tool)..."
-CPCXFS_BIN="$BIN_DIR/cpcxfs"
-if [ ! -f "$CPCXFS_BIN" ]; then
-    cd "$INSTALL_DIR"
-    git clone --depth 1 https://github.com/cpcsdk/cpcfs.git cpcfs-src 2>/dev/null || \
-    wget -q https://github.com/cpcsdk/cpcfs/archive/refs/heads/master.zip -O cpcfs.zip && \
-    unzip -q cpcfs.zip && mv cpcfs-master cpcfs-src
-    cd cpcfs-src
-    make -j"$(nproc)" 2>/dev/null || cmake . && make -j"$(nproc)"
-    find . -name "cpcxfs" -type f -exec cp {} "$BIN_DIR/" \;
-    ok "cpcxfs installed."
-    cd "$INSTALL_DIR"
-else
-    ok "cpcxfs already installed."
 fi
 
 # =============================================================================
@@ -252,7 +236,6 @@ echo "    cap32    - Caprice32 (CPC464/664/6128/6128+)"
 echo ""
 echo "  DISK TOOLS:"
 echo "    iDSK     - DSK image manipulation"
-echo "    cpcxfs   - CPC DSK filesystem tool"
 echo ""
 echo "  MUSIC:"
 echo "    Arkos Tracker 2 - AY/YM music tracker (manual install, see $INSTALL_DIR/ArkosTracker2)"

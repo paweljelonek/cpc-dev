@@ -104,7 +104,6 @@ in three locations:
 | `z88dk/`          | z88dk C compiler and Z80 toolchain                    | always         |
 | `vasm/`           | vasm assembler source                                 | always         |
 | `idsk-src/`       | iDSK disk image tool source                           | always         |
-| `cpcfs-src/`      | cpcxfs DSK filesystem tool source                     | always         |
 | `cpctlera/`       | CPCtelera C/ASM framework                             | always         |
 | `ArkosTracker2/`  | placeholder - Arkos Tracker 2 requires manual download | always        |
 | `caprice32-src/`  | Caprice32 emulator source                             | only if apt fails |
@@ -118,7 +117,6 @@ in three locations:
 | `zcc`      | wrapper script for z88dk      | always           |
 | `vasmz80`  | built from source             | always           |
 | `iDSK`     | built from source             | always           |
-| `cpcxfs`   | built from source             | always           |
 | `cap32`    | built from source             | only if apt fails |
 | `pasmo`    | built from source             | only if apt fails |
 
@@ -262,7 +260,6 @@ All tools below are installed automatically by `setup.sh` for Amstrad CPC develo
 | **zcc / z88dk** | C compiler and Z80 toolchain             | Used for C examples; `+cpc` target for CPC      | [github](https://github.com/z88dk/z88dk) |
 | **cap32**     | Caprice32 emulator                         | Emulates CPC464/664/6128/6128+; `-d` opens debugger | [github](https://github.com/ColinPitrat/caprice32) |
 | **iDSK**      | DSK disk image tool                        | Creates and populates `.dsk` images             | [github](https://github.com/cpcsdk/idsk) |
-| **cpcxfs**    | CPC DSK filesystem tool                    | Alternative to iDSK for DSK manipulation        | [github](https://github.com/cpcsdk/cpcfs) |
 | **CPCtelera** | C/ASM framework for CPC                    | Higher-level API for graphics, sound, input     | [github](https://github.com/lronaldo/cpctelera) |
 | **Arkos Tracker** | AY/YM music tracker                    | Manual install - see project website            | [julien-nevo.com](https://www.julien-nevo.com/arkostracker/) |
 
