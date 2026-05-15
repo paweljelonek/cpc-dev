@@ -10,7 +10,7 @@
 > completeness, or fitness for any purpose.
 
 Development environment for Amstrad CPC - Z80 assembler and C compiler toolchain,
-Caprice32 emulator, DSK disk image tools, and ready-to-run examples.
+MAME emulator, DSK disk image tools, and ready-to-run examples.
 Targets CPC464, CPC664, CPC6128, and CPC6128+.
 
 > **🐧 Linux (Ubuntu / Linux Mint / Debian) only**
@@ -106,7 +106,6 @@ in three locations:
 | `idsk-src/`       | iDSK disk image tool source                           | always         |
 | `cpctlera/`       | CPCtelera C/ASM framework                             | always         |
 | `ArkosTracker2/`  | placeholder - Arkos Tracker 2 requires manual download | always        |
-| `caprice32-src/`  | Caprice32 emulator source                             | only if apt fails |
 | `pasmo-src/`      | Pasmo assembler source                                | only if apt fails |
 
 **`~/.local/bin/`** - compiled binaries and wrapper scripts:
@@ -117,7 +116,6 @@ in three locations:
 | `zcc`      | wrapper script for z88dk      | always           |
 | `vasmz80`  | built from source             | always           |
 | `iDSK`     | built from source             | always           |
-| `cap32`    | built from source             | only if apt fails |
 | `pasmo`    | built from source             | only if apt fails |
 
 **system (apt):** always installed via `apt-get`:
@@ -134,7 +132,7 @@ in three locations:
 | `libsdl2-dev`, `libsdl2-image-dev` | graphics/emulator libs |
 | `libpng-dev`, `zlib1g-dev` | image and compression libs   |
 | `nasm`             | x86 assembler (build dependency)     |
-| `caprice32`        | CPC emulator (falls back to source build if unavailable) |
+| `mame`             | CPC emulator                                         |
 | `pasmo`            | Z80 assembler (falls back to source build if unavailable) |
 
 The setup script also adds `~/.local/bin` to `PATH` in `~/.bashrc` or `~/.zshrc`
@@ -180,8 +178,8 @@ C projects use their own Makefile - see [examples/c/](examples/c/).
 
 ```bash
 make PROJECT=my-project           # assemble → create DSK image
-make run PROJECT=my-project       # assemble → launch in Caprice32
-make debug PROJECT=my-project     # assemble → launch with Caprice32 debugger
+make run PROJECT=my-project       # assemble → launch in MAME
+make debug PROJECT=my-project     # assemble → launch with MAME debugger
 make clean PROJECT=my-project     # remove *.bin *.dsk *.sym *.o
 make list                         # list all projects in CPC_PROJECTS
 ```
@@ -205,9 +203,11 @@ cd examples/c/01-hello && make run     # Hello World - C (z88dk)
 cd examples/c/02-border && make run    # border animation - C (z88dk)
 ```
 
-After Caprice32 opens, load the program from the DSK:
+MAME opens with the DSK in drive A and automatically types the load commands. If autorun does not trigger, type manually:
 
 ```basic
+|DISC
+MEMORY &7FFF
 LOAD "MAIN.BIN",&8000
 CALL &8000
 ```
@@ -221,8 +221,8 @@ See [examples/README.md](examples/README.md) for a full description of each exam
 | Target  | Parameters         | Description                              |
 |---------|--------------------|------------------------------------------|
 | `all`   | `PROJECT` or `DIR` | Assemble source, produce `.bin` and `.dsk` |
-| `run`   | `PROJECT` or `DIR` | Build, then launch in Caprice32          |
-| `debug` | `PROJECT` or `DIR` | Build, then launch with Caprice32 debugger |
+| `run`   | `PROJECT` or `DIR` | Build, then launch in MAME               |
+| `debug` | `PROJECT` or `DIR` | Build, then launch with MAME debugger    |
 | `clean` | `PROJECT` or `DIR` | Delete `.bin`, `.dsk`, `.sym`, `.o`      |
 | `list`  | -                  | List projects in `CPC_PROJECTS`          |
 
@@ -258,7 +258,7 @@ All tools below are installed automatically by `setup.sh` for Amstrad CPC develo
 | **pasmo**     | Portable Z80 cross-assembler               | Alternative to rasm, simpler feature set        | [pasmo.speccy.org](https://pasmo.speccy.org/) |
 | **vasmz80**   | vasm with Z80 backend                      | Alternative assembler, multiple syntax modes    | [hasenbraten.de](http://sun.hasenbraten.de/vasm/) |
 | **zcc / z88dk** | C compiler and Z80 toolchain             | Used for C examples; `+cpc` target for CPC      | [github](https://github.com/z88dk/z88dk) |
-| **cap32**     | Caprice32 emulator                         | Emulates CPC464/664/6128/6128+; `-d` opens debugger | [github](https://github.com/ColinPitrat/caprice32) |
+| **mame**      | MAME emulator                              | Emulates CPC464/664/6128/6128+; `-debug` opens debugger | [mamedev.org](https://www.mamedev.org/) |
 | **iDSK**      | DSK disk image tool                        | Creates and populates `.dsk` images             | [github](https://github.com/cpcsdk/idsk) |
 | **CPCtelera** | C/ASM framework for CPC                    | Higher-level API for graphics, sound, input     | [github](https://github.com/lronaldo/cpctelera) |
 | **Arkos Tracker** | AY/YM music tracker                    | Manual install - see project website            | [julien-nevo.com](https://www.julien-nevo.com/arkostracker/) |
@@ -273,9 +273,8 @@ All tools below are installed automatically by `setup.sh` for Amstrad CPC develo
 - `setup.sh` has been tested on **Linux Mint / Ubuntu / Debian** only.
   Other distributions will likely need manual adjustments.
 - No support yet for multi-file projects or includes across directories.
-- The Caprice32 autoboot sequence (loading from DSK automatically on start) is
-  not set up - you must type `LOAD`/`CALL` manually or use a BASIC loader on
-  the DSK. This is a known gap.
+- MAME requires CPC ROM files to be present in `~/.cpc-dev/rom/`. They are not
+  bundled with MAME. See [Troubleshooting](#troubleshooting) if MAME fails to start.
 - CPCtelera requires its own project scaffold (`cpct_mkproject`) and is not
   integrated into the main Makefile. The examples use z88dk instead.
 - `iDSK` commands in the Makefile do not set AMSDOS load/exec addresses.
@@ -284,6 +283,23 @@ All tools below are installed automatically by `setup.sh` for Amstrad CPC develo
 ---
 
 ## Troubleshooting
+
+### MAME fails to start - "Required files are missing"
+
+MAME does not bundle console ROMs. The CPC ROM files (`cpc6128.zip`, `cpc464.zip`) need to be placed in `~/.cpc-dev/rom/`. The Amstrad CPC ROMs are freely distributable (Amstrad gave permission) - search for "Amstrad CPC MAME ROMs" to find them.
+
+`setup.sh` copies ROMs automatically from the `caprice32` apt package if it is installed. If not, create the directory and place the two required files:
+
+```bash
+mkdir -p ~/.cpc-dev/rom/cpc6128
+# place cpc6128.rom (32768 bytes, CRC 9e827fe1) and cpcados.rom (16384 bytes, CRC 1fe22ecd)
+cp cpc6128.rom cpcados.rom ~/.cpc-dev/rom/cpc6128/
+mame -verifyroms cpc6128    # should print: romset cpc6128 is good
+```
+
+CPC ROMs are freely available (Amstrad gave permission for personal use). Search for "Amstrad CPC MAME ROMs".
+
+---
 
 ### z88dk build fails with `bifrost2_engine_48.bin.zx0`
 

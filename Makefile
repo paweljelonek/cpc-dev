@@ -3,8 +3,8 @@
 #
 # Tryb PROJECT (projekty z katalogu CPC_PROJECTS):
 #   make PROJECT=name          - asembluj projekt
-#   make run PROJECT=name      - asembluj i uruchom w Caprice32
-#   make debug PROJECT=name    - uruchom z debuggerem Caprice32
+#   make run PROJECT=name      - asembluj i uruchom w MAME
+#   make debug PROJECT=name    - uruchom z debuggerem MAME
 #   make clean PROJECT=name    - usuń artefakty
 #   make list                  - wylistuj dostępne projekty
 #
@@ -15,14 +15,13 @@
 # =============================================================================
 
 RASM    = rasm
-CAP32   = cap32
+MAME    = mame
 
 -include .env
 
-# CPC model: accept MODEL= on command line, fall back to CPC_MODEL from .env, then 6128
-_MODEL := $(or $(MODEL),$(CPC_MODEL),6128)
-_MODEL_NUM := $(if $(filter 464,$(_MODEL)),0,$(if $(filter 664,$(_MODEL)),1,$(if $(filter 6128p,$(_MODEL)),3,2)))
-_MODEL_FLAG = -O system.model=$(_MODEL_NUM)
+# CPC model: accept MODEL= on command line, fall back to CPC_MODEL from .env, then cpc6128
+# Valid values: cpc464, cpc664, cpc6128, cpc6128p
+_MODEL := $(or $(MODEL),$(CPC_MODEL),cpc6128)
 
 # ---------------------------------------------------------------------------
 # Rozwiązanie ścieżki projektu - PROJECT lub DIR
@@ -52,21 +51,21 @@ help:
 	 echo ""; \
 	 echo "$${_cyan}Usage:$${_r}"; \
 	 echo "  $${_yel}make [all]  PROJECT=name$${_r}   - assemble project from CPC_PROJECTS"; \
-	 echo "  $${_yel}make run    PROJECT=name$${_r}   - assemble and launch in Caprice32"; \
-	 echo "  $${_yel}make debug  PROJECT=name$${_r}   - assemble and launch with debugger"; \
+	 echo "  $${_yel}make run    PROJECT=name$${_r}   - assemble and launch in MAME"; \
+	 echo "  $${_yel}make debug  PROJECT=name$${_r}   - assemble and launch with MAME debugger"; \
 	 echo "  $${_yel}make clean  PROJECT=name$${_r}   - remove build artifacts"; \
 	 echo ""; \
 	 echo "  $${_yel}make [all]  DIR=path$${_r}       - assemble from any local directory"; \
 	 echo "  $${_yel}make run    DIR=path$${_r}       - assemble and launch from local directory"; \
 	 echo "  $${_yel}make clean  DIR=path$${_r}       - remove build artifacts"; \
 	 echo ""; \
-	 echo "  $${_yel}make run    PROJECT=name MODEL=464$${_r}  - run on specific model"; \
+	 echo "  $${_yel}make run    PROJECT=name MODEL=cpc464$${_r}  - run on specific model"; \
 	 echo ""; \
 	 echo "  $${_yel}make list$${_r}                  - list projects in CPC_PROJECTS"; \
 	 echo "  $${_yel}make help$${_r}                  - show this help"; \
 	 echo ""; \
 	 echo "$${_cyan}CPC_PROJECTS$${_r} = $${_dim}$(CPC_PROJECTS)$${_r}"; \
-	 echo "$${_cyan}CPC_MODEL$${_r}    = $${_dim}$(_MODEL)$${_r}  (464 / 664 / 6128 / 6128p)"
+	 echo "$${_cyan}CPC_MODEL$${_r}    = $${_dim}$(_MODEL)$${_r}  (cpc464 / cpc664 / cpc6128 / cpc6128p)"
 
 _require_dir:
 	@test -n "$(PROJ_DIR)" || \
@@ -81,20 +80,20 @@ endif
 all: $(if $(PROJ_DIR),_require_dir $(DSK),help)
 
 $(BIN): $(SRC)
-	@test -f $(SRC) || (echo "ERROR: $(SRC) nie znaleziono" && exit 1)
-	$(RASM) $< -o $(BIN) -s $(SYM) -eq
+	@test -f $(SRC) || (echo "ERROR: $(SRC) not found" && exit 1)
+	$(RASM) $< -ob $(BIN) -amper -sw $(SYM:.sym=)
 	@echo ">>> Built: $(BIN) ($$(wc -c < $(BIN)) bytes)"
 
 $(DSK): $(BIN)
 	iDSK $(DSK) -n
-	iDSK $(DSK) -i $(BIN) -t 1
+	iDSK $(DSK) -i $(BIN) -t 1 -c 8000 -e 8000
 	@echo ">>> DSK image: $(DSK)"
 
 run: _require_dir $(DSK)
-	$(CAP32) $(_MODEL_FLAG) $(DSK) &
+	$(MAME) $(_MODEL) -window -skip_gameinfo -flop1 $(abspath $(DSK)) -autoboot_delay 3 -autoboot_command '|disc\nMEMORY &7FFF\nLOAD "MAIN.BIN",&8000\nCALL &8000\n' &
 
 debug: _require_dir $(DSK)
-	$(CAP32) $(_MODEL_FLAG) $(DSK) -d &
+	$(MAME) $(_MODEL) -window -skip_gameinfo -flop1 $(abspath $(DSK)) -autoboot_delay 3 -autoboot_command '|disc\nMEMORY &7FFF\nLOAD "MAIN.BIN",&8000\nCALL &8000\n' -debug &
 
 clean: _require_dir
 	rm -f $(PROJ_DIR)/*.bin $(PROJ_DIR)/*.dsk $(PROJ_DIR)/*.sym $(PROJ_DIR)/*.o

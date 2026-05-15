@@ -25,21 +25,22 @@ echo ""
 echo "  Will remove:"
 echo "    $INSTALL_DIR/"
 echo "      rasm-src/      - Rasm assembler source"
-echo "      caprice32-src/ - Caprice32 emulator source (if built from source)"
 echo "      pasmo-src/     - Pasmo assembler source (if built from source)"
 echo "      z88dk/         - z88dk compiler and toolchain"
 echo "      vasm/          - vasm assembler source"
 echo "      idsk-src/      - iDSK disk image tool source"
-echo "      cpcfs-src/     - cpcxfs disk tool source"
 echo "      ArkosTracker2/ - Arkos Tracker 2 directory"
 echo "      cpctlera/      - CPCtelera framework"
+echo "      rom/           - CPC ROM files"
 echo ""
-echo "    $BIN_DIR/{rasm,cap32,zcc,vasmz80,iDSK,cpcxfs}"
+echo "    $BIN_DIR/{rasm,zcc,vasmz80,iDSK}"
+echo ""
+echo "    ~/.mame/mame.ini - MAME config"
 echo ""
 echo "    PATH entry from ~/.bashrc and/or ~/.zshrc"
 echo ""
 echo "  Will NOT remove apt packages:"
-echo "    pasmo, nasm, caprice32, build-essential, libsdl2-dev, ..."
+echo "    mame, pasmo, nasm, build-essential, libsdl2-dev, ..."
 echo "    (use 'sudo apt-get remove <package>' manually if needed)"
 echo ""
 read -rp "Proceed? [y/N] " ans
@@ -50,7 +51,7 @@ echo ""
 # Binaries from ~/.local/bin
 # -----------------------------------------------------------------------------
 info "Removing binaries from $BIN_DIR..."
-for bin in rasm cap32 zcc vasmz80 iDSK cpcxfs; do
+for bin in rasm zcc vasmz80 iDSK; do
     if [ -f "$BIN_DIR/$bin" ]; then
         rm -f "$BIN_DIR/$bin"
         ok "Removed $bin"
@@ -68,6 +69,16 @@ if [ -d "$INSTALL_DIR" ]; then
     ok "Removed $INSTALL_DIR"
 else
     warn "$INSTALL_DIR not found, skipping."
+fi
+
+# -----------------------------------------------------------------------------
+# MAME config
+# -----------------------------------------------------------------------------
+MAME_INI="$HOME/.mame/mame.ini"
+if [ -f "$MAME_INI" ]; then
+    info "Removing MAME config $MAME_INI..."
+    rm -f "$MAME_INI"
+    ok "Removed $MAME_INI"
 fi
 
 # -----------------------------------------------------------------------------

@@ -12,9 +12,11 @@ cd examples/asm/01-hello
 make run
 ```
 
-After Caprice32 opens:
+MAME opens with the DSK inserted and types the load commands automatically. If autorun does not trigger, type manually:
 
 ```basic
+|DISC
+MEMORY &7FFF
 LOAD "MAIN.BIN",&8000
 CALL &8000
 ```

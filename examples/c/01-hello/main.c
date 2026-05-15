@@ -6,8 +6,11 @@
  */
 
 #include <stdio.h>
+#include <conio.h>
 
 int main(void) {
     printf("Hello, Amstrad CPC!\n");
+    printf("Press any key...\n");
+    getchar();
     return 0;
 }

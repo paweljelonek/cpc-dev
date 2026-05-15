@@ -45,23 +45,45 @@ sudo apt-get install -y \
 ok "Dependencies installed."
 
 # =============================================================================
-# 2. CAPRICE32 - CPC EMULATOR
+# 2. MAME - CPC EMULATOR
 # =============================================================================
-info "Installing Caprice32 emulator..."
-if ! command -v cap32 &>/dev/null; then
-    sudo apt-get install -y caprice32 2>/dev/null || {
-        info "Building Caprice32 from source..."
-        cd "$INSTALL_DIR"
-        git clone --depth 1 https://github.com/ColinPitrat/caprice32.git caprice32-src
-        cd caprice32-src
-        make -j"$(nproc)"
-        cp cap32 "$BIN_DIR/"
-        ok "Caprice32 built."
-        cd "$INSTALL_DIR"
-    }
-    ok "Caprice32 installed."
+info "Installing MAME emulator..."
+if ! command -v mame &>/dev/null; then
+    sudo apt-get install -y mame
+    ok "MAME installed."
 else
-    ok "Caprice32 already installed."
+    ok "MAME already installed."
+fi
+
+# Configure MAME rompath so it finds CPC ROMs in our install directory
+MAME_CFG_DIR="$HOME/.mame"
+MAME_ROM_DIR="$INSTALL_DIR/rom"
+mkdir -p "$MAME_CFG_DIR" "$MAME_ROM_DIR"
+
+MAME_INI="$MAME_CFG_DIR/mame.ini"
+if [ ! -f "$MAME_INI" ]; then
+    printf 'rompath %s\n' "$MAME_ROM_DIR" > "$MAME_INI"
+    info "MAME config written to $MAME_INI"
+fi
+
+# Copy CPC ROMs from Caprice32 apt package and create MAME-compatible directory structure.
+# MAME expects: rompath/cpc6128/cpc6128.rom (32K OS+BASIC) and cpcados.rom (16K AMSDOS).
+# Caprice32 ships the same ROM data as amsdos.rom - correct CRC verified.
+ROM_SRC="$(dpkg -L caprice32 2>/dev/null | grep -m1 '\.rom$' | xargs dirname 2>/dev/null || true)"
+if [ -n "$ROM_SRC" ] && [ -d "$ROM_SRC" ]; then
+    cp "$ROM_SRC"/*.rom "$MAME_ROM_DIR/" 2>/dev/null || true
+    # Create cpc6128/ subdir with MAME-expected filenames
+    mkdir -p "$MAME_ROM_DIR/cpc6128"
+    cp "$MAME_ROM_DIR/cpc6128.rom" "$MAME_ROM_DIR/cpc6128/cpc6128.rom" 2>/dev/null || true
+    cp "$MAME_ROM_DIR/amsdos.rom"  "$MAME_ROM_DIR/cpc6128/cpcados.rom" 2>/dev/null || true
+    ok "CPC ROMs configured for MAME in $MAME_ROM_DIR/cpc6128/"
+    mame -verifyroms cpc6128 &>/dev/null && ok "MAME ROM verification: OK" || \
+        warn "MAME ROM verification failed - run 'mame -verifyroms cpc6128' to diagnose"
+else
+    warn "CPC ROM files not found - MAME needs them to emulate the CPC."
+    warn "  Create: $MAME_ROM_DIR/cpc6128/"
+    warn "  Place:  cpc6128.rom (32768 bytes) and cpcados.rom (16384 bytes) inside it"
+    warn "  CPC ROMs are freely available - search 'amstrad cpc roms mame'"
 fi
 
 # =============================================================================
@@ -232,7 +254,7 @@ echo "    nasm     - $(command -v nasm    && nasm --version 2>&1 | head -1 || ec
 echo "    zcc      - $(command -v zcc     && echo 'available (z88dk)' || echo 'not available')"
 echo ""
 echo "  EMULATOR:"
-echo "    cap32    - Caprice32 (CPC464/664/6128/6128+)"
+echo "    mame     - MAME (CPC464/664/6128/6128+)"
 echo ""
 echo "  DISK TOOLS:"
 echo "    iDSK     - DSK image manipulation"

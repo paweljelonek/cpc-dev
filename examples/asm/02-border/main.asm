@@ -1,7 +1,7 @@
 ; Border color animation - Amstrad CPC
 ;
-; Cycles through all 32 CPC colors on the screen border using
-; direct Gate Array access (port &7F).
+; Cycles through all 32 CPC colors on the screen border.
+; Uses HALT to sync with CPC timer interrupt (~300Hz).
 ;
 ; Load from BASIC:
 ;   LOAD "MAIN.BIN",&8000
@@ -10,39 +10,33 @@
 
     org &8000
 
-; Gate Array port (A15=0, A14=1 - typically &7F)
-GA          equ &7F
-; Select pen command: bits 7-6 = 01 - &40 | pen_number
-; Pen 16 (&10) = border
-GA_BORDER   equ &50         ; &40 | &10
-; Set color command: bits 7-6 = 10 - &80 | color (0-31)
-GA_COLOR    equ &80
+GA_PORT     equ &7F     ; B=&7F for OUT (C),A: A15=0, A14=1
+GA_BORDER   equ &10     ; select border pen: &00 | &10 (bits 7-6=00, bit4=1)
+GA_COLOR    equ &40     ; set color: &40 | color 0-31 (bits 7-6=01)
 
-DELAY       equ 4000        ; delay ticks between colors
+HALTS       equ 20      ; interrupts per color (~66ms at 300Hz)
 
 start:
-    ld b, 0                 ; current color (0-31)
+    ld d, 0             ; current color (0-31)
 
 .loop:
-    ; select border pen
-    ld a, GA_BORDER
-    out (GA), a
-    ; set color
-    ld a, GA_COLOR
-    or b
-    out (GA), a
+    ld b, GA_PORT
 
-    ; delay
-    ld de, DELAY
+    ld a, GA_BORDER
+    out (c), a          ; select border pen
+
+    ld a, GA_COLOR
+    or d
+    out (c), a          ; set color
+
+    ld e, HALTS
 .wait:
-    dec de
-    ld a, d
-    or e
+    halt                ; wait for next CPC interrupt (~3.3ms)
+    dec e
     jr nz, .wait
 
-    ; next color, wrap at 32
-    inc b
-    ld a, b
+    inc d
+    ld a, d
     and &1F
-    ld b, a
+    ld d, a
     jr .loop
