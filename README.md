@@ -239,7 +239,7 @@ projects, use the per-example Makefile (`zcc`) instead.
 | Path                  | Language | Demonstrates                                  |
 |-----------------------|----------|-----------------------------------------------|
 | `asm/01-hello/`       | Z80 ASM  | Firmware call `TXT_OUTPUT` (&BB5A), string loop, `ret` to BASIC |
-| `asm/02-border/`      | Z80 ASM  | Direct Gate Array I/O (port &7F), delay loops |
+| `asm/02-border/`      | Z80 ASM  | Direct Gate Array I/O (port &7F), HALT-based timing |
 | `c/01-hello/`         | C        | `printf` via z88dk `+cpc` target              |
 | `c/02-border/`        | C        | Gate Array I/O from C via `#asm`/`#endasm`    |
 
@@ -277,8 +277,8 @@ All tools below are installed automatically by `setup.sh` for Amstrad CPC develo
   bundled with MAME. See [Troubleshooting](#troubleshooting) if MAME fails to start.
 - CPCtelera requires its own project scaffold (`cpct_mkproject`) and is not
   integrated into the main Makefile. The examples use z88dk instead.
-- `iDSK` commands in the Makefile do not set AMSDOS load/exec addresses.
-  Always use `LOAD "MAIN.BIN",&8000` followed by `CALL &8000` from BASIC.
+- Always use `LOAD "MAIN.BIN",&8000` followed by `CALL &8000` from BASIC
+  (or rely on MAME's autoboot command which types these automatically).
 
 ---
 
